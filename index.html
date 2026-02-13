@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang='ja'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Photo Gallery</title>
+    <link rel='stylesheet' href='style.css'>
+</head>
+<body>
+
+    <h2>Photo Gallery</h2>
+
+    <div class='gallery-container' id='gallery'></div>
+
+    <div id='modal'>
+        <span id='close-btn' role='button'>&times;</span>
+        
+        <button id='prev-btn' class='nav-btn' aria-label='back'>&#10094;</button>
+        
+        <img id='modal-img' src='' alt='zoomed image'>
+        
+        <button id='next-btn' class='nav-btn' aria-label='next'>&#10095;</button>
+    </div>
+
+    <script src='script.js'></script>
+</body>
+</html>
