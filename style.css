@@ -35,52 +35,54 @@ h2 { text-align: center; font-weight: 300; }
 #modal {
     display: none;
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0; left: 0;
+    width: 100dvw; height: 100dvh;
     background: rgba(0, 0, 0, 0.95);
-    justify-content: center;
-    align-items: center;
     z-index: 1000;
-    touch-action: none;
 }
 
-#modal-img {
+/* The Magic: Native Scroll Container */
+#slider-track {
+    display: flex;
+    overflow-x: auto; /* Enable native horizontal scroll */
+    overflow-y: hidden;
+    width: 100%;
+    height: 100%;
+    scroll-snap-type: x mandatory; /* Forces 'snapping' to images */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Extra smooth for iOS */
+}
+
+/* Hide scrollbars but keep functionality */
+#slider-track::-webkit-scrollbar { display: none; }
+
+.slide {
+    flex: 0 0 100%; /* Each slide is exactly 100% wide */
+    width: 100%;
+    height: 100%;
+    scroll-snap-align: start; /* Where to snap */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.slide img {
     max-width: 95%;
     max-height: 90%;
     object-fit: contain;
-    user-select: none;
-    will-change: transform;
+    pointer-events: none;
 }
 
-.nav-btn {
+/* Buttons remain fixed */
+.nav-btn, #close-btn {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    z-index: 1010;
+    color: white;
+    background: none;
     border: none;
-    font-size: 32px;
-    cursor: pointer;
-    padding: 20px 15px;
-    border-radius: 4px;
-    transition: background 0.2s;
-    z-index: 1010;
+    font-size: 30px;
+    padding: 20px;
 }
-
-.nav-btn:hover { background: rgba(255, 255, 255, 0.2); }
-#prev-btn { left: 10px; }
-#next-btn { right: 10px; }
-
-#close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 36px;
-    cursor: pointer;
-    color: #fff;
-    z-index: 1010;
-    line-height: 1;
-}
-
-@media (max-width: 600px) {
-    .nav-btn { padding: 15px 10px; font-size: 24px; }
-}
+#prev-btn { left: 0; top: 50%; transform: translateY(-50%); }
+#next-btn { right: 0; top: 50%; transform: translateY(-50%); }
+#close-btn { top: 10px; right: 10px; }

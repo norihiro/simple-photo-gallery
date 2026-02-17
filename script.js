@@ -1,12 +1,6 @@
 let imageData = [];
-let currentIndex = 0;
-let startX = 0;
-let currentX = 0;
-let isDragging = false;
-
 const modal = document.getElementById('modal');
-const modalImg = document.getElementById('modal-img');
-const gallery = document.getElementById('gallery');
+const track = document.getElementById('slider-track');
 
 async function init() {
     try {
@@ -15,105 +9,104 @@ async function init() {
         imageData = await response.json();
 
         renderGallery();
-    } catch (error) {
-        console.error('Failed to load image data:', error);
-    }
+        renderSlides();
+    } catch (e) { console.error(e); }
 }
 
 function renderGallery() {
+    const gallery = document.getElementById('gallery');
     imageData.forEach((item, index) => {
         const img = document.createElement('img');
+        img.fetchPriority = 'high';
+        img.loading = 'lazy';
         img.src = item.thumb;
         img.className = 'thumbnail';
-        img.loading = 'lazy';
         img.onclick = () => openModal(index);
         gallery.appendChild(img);
     });
 }
 
-function preload(index) {
-    if (imageData.length === 0) return;
-    const targetIndex = (index + imageData.length) % imageData.length;
-    const img = new Image();
-    img.src = imageData[targetIndex].full;
+function renderSlides() {
+    imageData.forEach((item) => {
+        const slide = document.createElement('div');
+        slide.className = 'slide';
+        const img = document.createElement('img');
+        img.dataset.src = item.full;
+        slide.appendChild(img);
+        track.appendChild(slide);
+    });
 }
-
-function updateDisplay(index) {
-    currentIndex = index;
-    modalImg.style.transition = 'none';
-    modalImg.style.transform = 'translateX(0)';
-    modalImg.src = imageData[currentIndex].full;
-
-    preload(currentIndex + 1);
-    preload(currentIndex - 1);
-}
-
-modalImg.addEventListener('touchstart', (e) => {
-    startX = e.touches[0].pageX;
-    isDragging = true;
-    modalImg.style.transition = 'none';
-}, { passive: true });
-
-modalImg.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    currentX = e.touches[0].pageX;
-    const diffX = currentX - startX;
-    modalImg.style.transform = 'translateX(' + diffX + 'px)';
-}, { passive: true });
-
-modalImg.addEventListener('touchend', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    const diffX = currentX - startX;
-    const threshold = 100;
-
-    modalImg.style.transition = 'transform 0.3s ease';
-
-    if (diffX > threshold) {
-        prev();
-    } else if (diffX < -threshold) {
-        next();
-    } else {
-        modalImg.style.transform = 'translateX(0)';
-    }
-    currentX = 0;
-});
 
 function openModal(index) {
-    modal.style.display = 'flex';
-    updateDisplay(index);
+    modal.style.display = 'block';
+    // Small delay to ensure display:block is applied before scrolling
+    setTimeout(() => {
+        const width = track.clientWidth;
+        track.scrollTo({ left: index * width, behavior: 'instant' });
+        loadImages(index);
+    }, 10);
+}
+
+// Logic to load images when scrolling stops
+track.addEventListener('scroll', () => {
+    const x = track.scrollLeft / track.clientWidth;
+    loadImages(Math.round(x));
+});
+
+function loadOneImage(index) {
+    if (index < 0 || track.children.length <= index)
+        return;
+
+    const img = track.children[index].querySelector('img');
+    if (!img)
+        return;
+
+    if (!img.src) {
+        img.fetchPriority = 'high';
+        img.src = img.dataset.src;
+    }
+
+    return img.complete;
+}
+
+function loadImages(index) {
+    const ret = loadOneImage(index);
+    setTimeout(() => {
+        loadOneImage(index + 1);
+        loadOneImage(index - 1);
+    }, ret ? 1 : 100);
 }
 
 function closeModal() {
     modal.style.display = 'none';
-    modalImg.src = '';
+}
+function next() {
+    const index = Math.round(track.scrollLeft / track.clientWidth);
+    loadImages(index + 1);
+    track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
+}
+function prev() {
+    const index = Math.round(track.scrollLeft / track.clientWidth);
+    loadImages(index - 1);
+    track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
 }
 
-function next() { updateDisplay((currentIndex + 1) % imageData.length); }
-function prev() { updateDisplay((currentIndex - 1 + imageData.length) % imageData.length); }
-
-document.getElementById('close-btn').onclick = closeModal;
-document.getElementById('next-btn').onclick = (e) => { e.stopPropagation(); next(); };
-document.getElementById('prev-btn').onclick = (e) => { e.stopPropagation(); prev(); };
-
-modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+document.getElementById('next-btn').onclick = () => {
+    next();
+};
+document.getElementById('prev-btn').onclick = () => {
+    prev();
+};
+document.getElementById('close-btn').onclick = () => {
+    closeModal();
+}
 
 document.addEventListener('keydown', (e) => {
-    if (modal.style.display === 'flex') {
+    if (modal.style.display === 'block') {
         if (e.key === 'ArrowRight') next();
         if (e.key === 'ArrowLeft') prev();
         if (e.key === 'Escape') closeModal();
     }
 });
-
-function openModal(index) {
-    modal.style.display = 'flex';
-    updateDisplay(index);
-}
-
-function closeModal() {
-    modal.style.display = 'none';
-    modalImg.src = '';
-}
 
 init();
