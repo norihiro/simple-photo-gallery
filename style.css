@@ -32,6 +32,20 @@ body {
 
 h2 { text-align: center; font-weight: 300; }
 
+.download-all {
+    display: inline-block;
+    padding: 10px 16px;
+    background: #0366d6;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.download-all:hover {
+    background: #024ea2;
+}
+
 .gallery-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
