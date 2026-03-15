@@ -53,9 +53,12 @@ function renderSlides() {
     imageData.forEach((item) => {
         const slide = document.createElement('div');
         slide.className = 'slide';
+        const a = document.createElement('a');
+        a.href = item.full;
+        slide.appendChild(a);
         const img = document.createElement('img');
         img.dataset.src = item.full;
-        slide.appendChild(img);
+        a.appendChild(img);
         track.appendChild(slide);
     });
 }
