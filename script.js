@@ -53,12 +53,57 @@ function renderSlides() {
     imageData.forEach((item) => {
         const slide = document.createElement('div');
         slide.className = 'slide';
-        const a = document.createElement('a');
-        a.href = item.full;
-        slide.appendChild(a);
-        const img = document.createElement('img');
-        img.dataset.src = item.full;
-        a.appendChild(img);
+
+        const isVideo = item.full.match(/\.(mov|mp4|webm|ogg)$/i);
+
+        if (!isVideo) {
+            const a = document.createElement('a');
+            a.href = item.full;
+            slide.appendChild(a);
+            const img = document.createElement('img');
+            img.dataset.src = item.full;
+            a.appendChild(img);
+        } else {
+	    const container = document.createElement('div');
+	    container.className = 'video-container';
+
+            const video = document.createElement('video');
+            video.controls = true;
+            video.preload = 'none';
+            video.dataset.src = item.full;
+            container.appendChild(video);
+
+	    const dl = document.createElement('button');
+	    dl.className = 'video-download';
+	    dl.innerText = 'Download';
+
+	    dl.onclick = async () => {
+		const fileUrl = item.full;
+		const fileName = fileUrl.split('/').pop();
+
+		try {
+		    const response = await fetch(fileUrl);
+		    const blob = await response.blob();
+		    const file = new File([blob], fileName, { type: blob.type });
+
+		    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+			await navigator.share({
+			    files: [file],
+			    title: fileName,
+			});
+		    } else {
+			window.open(fileUrl, '_blank');
+		    }
+		} catch (error) {
+		    console.error('Sharing failed', error);
+		    window.location.href = fileUrl;
+		}
+	    };
+	    container.appendChild(dl);
+
+	    slide.appendChild(container);
+        }
+
         track.appendChild(slide);
     });
 }
@@ -83,16 +128,19 @@ function loadOneImage(index) {
     if (index < 0 || track.children.length <= index)
         return;
 
-    const img = track.children[index].querySelector('img');
-    if (!img)
+    const media = track.children[index].querySelector('img, video');
+    if (!media)
         return;
 
-    if (!img.src) {
-        img.fetchPriority = 'high';
-        img.src = img.dataset.src;
+    let loading = false;
+
+    if (!media.src) {
+        media.fetchPriority = 'high';
+        media.src = media.dataset.src;
+        loading = true;
     }
 
-    return img.complete;
+    return media.tagName === 'IMG' ? media.complete : !loading;
 }
 
 function loadImages(index) {
@@ -105,6 +153,8 @@ function loadImages(index) {
 
 function closeModal() {
     modal.style.display = 'none';
+    const videos = track.querySelectorAll('video');
+    videos.forEach(v => v.pause());
 }
 function next() {
     const index = Math.round(track.scrollLeft / track.clientWidth);
